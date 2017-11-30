@@ -2,12 +2,12 @@
 
 namespace Mpociot\ApiDoc\Tests;
 
-use Mockery as m;
-use Orchestra\Testbench\TestCase;
+use Illuminate\Contracts\Translation\Loader;
 use Illuminate\Translation\Translator;
-use Illuminate\Translation\LoaderInterface;
-use Mpociot\ApiDoc\Parsers\RuleDescriptionParser;
+use Mockery as m;
 use Mpociot\ApiDoc\ApiDocGeneratorServiceProvider;
+use Mpociot\ApiDoc\Parsers\RuleDescriptionParser;
+use Orchestra\Testbench\TestCase;
 
 class RuleDescriptionParserTest extends TestCase
 {
@@ -16,7 +16,7 @@ class RuleDescriptionParserTest extends TestCase
     public function setUp()
     {
         parent::setUp();
-        $fileLoaderMock = m::mock(LoaderInterface::class);
+        $fileLoaderMock = m::mock(Loader::class);
         $this->translatorMock = m::mock(Translator::class, [$fileLoaderMock, 'es']);
         $this->app->instance('translator', $this->translatorMock);
     }
@@ -106,7 +106,7 @@ class RuleDescriptionParserTest extends TestCase
     /**
      * Define environment setup.
      *
-     * @param  \Illuminate\Foundation\Application   $app
+     * @param  \Illuminate\Foundation\Application $app
      *
      * @return void
      */
