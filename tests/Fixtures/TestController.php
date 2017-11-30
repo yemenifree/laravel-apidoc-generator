@@ -115,4 +115,58 @@ class TestController extends Controller
     {
         return '';
     }
+
+    /**
+     * @transformer \Mpociot\ApiDoc\Tests\Fixtures\TestTransformer
+     * @transformermodel \Mpociot\ApiDoc\Tests\Fixtures\TestModel
+     * @serializer \League\Fractal\Serializer\ArraySerializer
+     */
+    public function transformerTagWithCustomSerializer()
+    {
+        return '';
+    }
+
+    /**
+     * @responseclass \Mpociot\ApiDoc\Tests\Fixtures\TestStaticMessageResponse
+     * @wrap null
+     */
+    public function responseClassTagWithCustomStaticResponseData()
+    {
+        return '';
+    }
+
+    /**
+     * @responseclass \Mpociot\ApiDoc\Tests\Fixtures\TestMessageResponse
+     * @additional message|test,status_code|200
+     */
+    public function responseClassTagWithCustomDynamicResponseData()
+    {
+        return '';
+    }
+
+    /**
+     * @transformer \Mpociot\ApiDoc\Tests\Fixtures\TestTransformerUseData
+     * @data id|1,description|Welcome on this test versions,name|TestName
+     */
+    public function transformerTagWithData()
+    {
+        return '';
+    }
+
+    /**
+     * @transformercollection \Mpociot\ApiDoc\Tests\Fixtures\TestTransformerUseData
+     * @data id|1,description|Welcome on this test versions,name|TestName
+     */
+    public function transformerCollectionTagWithData()
+    {
+        return '';
+    }
+
+    /**
+     * @data id|1,description|Welcome on this test versions,name|TestName
+     */
+    public function dataTag()
+    {
+        return '';
+    }
 }

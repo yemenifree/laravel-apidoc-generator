@@ -3,12 +3,12 @@
 namespace Mpociot\ApiDoc\Tests;
 
 use Illuminate\Routing\Route;
-use Orchestra\Testbench\TestCase;
-use Mpociot\ApiDoc\Tests\Fixtures\TestRequest;
+use Illuminate\Support\Facades\Route as RouteFacade;
+use Mpociot\ApiDoc\ApiDocGeneratorServiceProvider;
 use Mpociot\ApiDoc\Generators\LaravelGenerator;
 use Mpociot\ApiDoc\Tests\Fixtures\TestController;
-use Mpociot\ApiDoc\ApiDocGeneratorServiceProvider;
-use Illuminate\Support\Facades\Route as RouteFacade;
+use Mpociot\ApiDoc\Tests\Fixtures\TestRequest;
+use Orchestra\Testbench\TestCase;
 
 class ApiDocGeneratorTest extends TestCase
 {
@@ -16,13 +16,6 @@ class ApiDocGeneratorTest extends TestCase
      * @var \Mpociot\ApiDoc\AbstractGenerator
      */
     protected $generator;
-
-    protected function getPackageProviders($app)
-    {
-        return [
-            ApiDocGeneratorServiceProvider::class,
-        ];
-    }
 
     /**
      * Setup the test environment.
@@ -36,8 +29,8 @@ class ApiDocGeneratorTest extends TestCase
 
     public function testCanParseMethodDescription()
     {
-        RouteFacade::get('/api/test', TestController::class.'@parseMethodDescription');
-        $route = new Route(['GET'], '/api/test', ['uses' => TestController::class.'@parseMethodDescription']);
+        RouteFacade::get('/api/test', TestController::class . '@parseMethodDescription');
+        $route = new Route(['GET'], '/api/test', ['uses' => TestController::class . '@parseMethodDescription']);
         $parsed = $this->generator->processRoute($route);
 
         $this->assertSame('Example title.', $parsed['title']);
@@ -46,40 +39,40 @@ class ApiDocGeneratorTest extends TestCase
 
     public function testCanParseRouteMethods()
     {
-        RouteFacade::get('/get', TestController::class.'@dummy');
-        RouteFacade::post('/post', TestController::class.'@dummy');
-        RouteFacade::put('/put', TestController::class.'@dummy');
-        RouteFacade::delete('/delete', TestController::class.'@dummy');
+        RouteFacade::get('/get', TestController::class . '@dummy');
+        RouteFacade::post('/post', TestController::class . '@dummy');
+        RouteFacade::put('/put', TestController::class . '@dummy');
+        RouteFacade::delete('/delete', TestController::class . '@dummy');
 
-        $route = new Route(['GET'], '/get', ['uses' => TestController::class.'@parseMethodDescription']);
+        $route = new Route(['GET'], '/get', ['uses' => TestController::class . '@parseMethodDescription']);
         $parsed = $this->generator->processRoute($route);
         $this->assertSame(['GET', 'HEAD'], $parsed['methods']);
 
-        $route = new Route(['POST'], '/post', ['uses' => TestController::class.'@parseMethodDescription']);
+        $route = new Route(['POST'], '/post', ['uses' => TestController::class . '@parseMethodDescription']);
         $parsed = $this->generator->processRoute($route);
         $this->assertSame(['POST'], $parsed['methods']);
 
-        $route = new Route(['PUT'], '/put', ['uses' => TestController::class.'@parseMethodDescription']);
+        $route = new Route(['PUT'], '/put', ['uses' => TestController::class . '@parseMethodDescription']);
         $parsed = $this->generator->processRoute($route);
         $this->assertSame(['PUT'], $parsed['methods']);
 
-        $route = new Route(['DELETE'], '/delete', ['uses' => TestController::class.'@parseMethodDescription']);
+        $route = new Route(['DELETE'], '/delete', ['uses' => TestController::class . '@parseMethodDescription']);
         $parsed = $this->generator->processRoute($route);
         $this->assertSame(['DELETE'], $parsed['methods']);
     }
 
     public function testCanParseDependencyInjectionInControllerMethods()
     {
-        RouteFacade::post('/post', TestController::class.'@dependencyInjection');
-        $route = new Route(['POST'], '/post', ['uses' => TestController::class.'@dependencyInjection']);
+        RouteFacade::post('/post', TestController::class . '@dependencyInjection');
+        $route = new Route(['POST'], '/post', ['uses' => TestController::class . '@dependencyInjection']);
         $parsed = $this->generator->processRoute($route);
         $this->assertTrue(is_array($parsed));
     }
 
     public function testCanParseFormRequestRules()
     {
-        RouteFacade::post('/post', TestController::class.'@parseFormRequestRules');
-        $route = new Route(['POST'], '/post', ['uses' => TestController::class.'@parseFormRequestRules']);
+        RouteFacade::post('/post', TestController::class . '@parseFormRequestRules');
+        $route = new Route(['POST'], '/post', ['uses' => TestController::class . '@parseFormRequestRules']);
         $parsed = $this->generator->processRoute($route);
         $parameters = $parsed['parameters'];
 
@@ -339,13 +332,25 @@ class ApiDocGeneratorTest extends TestCase
 
     public function testCanParseResponseTag()
     {
-        RouteFacade::post('/responseTag', TestController::class.'@responseTag');
-        $route = new Route(['GET'], '/responseTag', ['uses' => TestController::class.'@responseTag']);
+        RouteFacade::post('/responseTag', TestController::class . '@responseTag');
+        $route = new Route(['GET'], '/responseTag', ['uses' => TestController::class . '@responseTag']);
         $parsed = $this->generator->processRoute($route);
+
+        $this->assertResponse($parsed, '"{\n data: [],\n}"');
+    }
+
+    /**
+     * assert response.
+     *
+     * @param $parsed
+     * @param string $response json response
+     */
+    protected function assertResponse($parsed, $response)
+    {
         $this->assertTrue(is_array($parsed));
         $this->assertArrayHasKey('showresponse', $parsed);
         $this->assertTrue($parsed['showresponse']);
-        $this->assertSame($parsed['response'], '"{\n data: [],\n}"');
+        $this->assertSame($parsed['response'], $response);
     }
 
     public function testCanParseTransformerTag()
@@ -353,30 +358,20 @@ class ApiDocGeneratorTest extends TestCase
         if (version_compare(PHP_VERSION, '7.0.0', '<')) {
             $this->markTestSkipped('The transformer tag without model need PHP 7');
         }
-        RouteFacade::post('/transformerTag', TestController::class.'@transformerTag');
-        $route = new Route(['GET'], '/transformerTag', ['uses' => TestController::class.'@transformerTag']);
+        RouteFacade::post('/transformerTag', TestController::class . '@transformerTag');
+        $route = new Route(['GET'], '/transformerTag', ['uses' => TestController::class . '@transformerTag']);
         $parsed = $this->generator->processRoute($route);
-        $this->assertTrue(is_array($parsed));
-        $this->assertArrayHasKey('showresponse', $parsed);
-        $this->assertTrue($parsed['showresponse']);
-        $this->assertSame(
-            $parsed['response'],
-            '{"data":{"id":1,"description":"Welcome on this test versions","name":"TestName"}}'
-        );
+
+        $this->assertResponse($parsed, '{"data":{"id":1,"description":"Welcome on this test versions","name":"TestName"}}');
     }
 
     public function testCanParseTransformerTagWithModel()
     {
-        RouteFacade::post('/transformerTagWithModel', TestController::class.'@transformerTagWithModel');
-        $route = new Route(['GET'], '/transformerTagWithModel', ['uses' => TestController::class.'@transformerTagWithModel']);
+        RouteFacade::post('/transformerTagWithModel', TestController::class . '@transformerTagWithModel');
+        $route = new Route(['GET'], '/transformerTagWithModel', ['uses' => TestController::class . '@transformerTagWithModel']);
         $parsed = $this->generator->processRoute($route);
-        $this->assertTrue(is_array($parsed));
-        $this->assertArrayHasKey('showresponse', $parsed);
-        $this->assertTrue($parsed['showresponse']);
-        $this->assertSame(
-            $parsed['response'],
-            '{"data":{"id":1,"description":"Welcome on this test versions","name":"TestName"}}'
-        );
+
+        $this->assertResponse($parsed, '{"data":{"id":1,"description":"Welcome on this test versions","name":"TestName"}}');
     }
 
     public function testCanParseTransformerCollectionTag()
@@ -384,31 +379,97 @@ class ApiDocGeneratorTest extends TestCase
         if (version_compare(PHP_VERSION, '7.0.0', '<')) {
             $this->markTestSkipped('The transformer tag without model need PHP 7');
         }
-        RouteFacade::post('/transformerCollectionTag', TestController::class.'@transformerCollectionTag');
-        $route = new Route(['GET'], '/transformerCollectionTag', ['uses' => TestController::class.'@transformerCollectionTag']);
+        RouteFacade::post('/transformerCollectionTag', TestController::class . '@transformerCollectionTag');
+        $route = new Route(['GET'], '/transformerCollectionTag', ['uses' => TestController::class . '@transformerCollectionTag']);
         $parsed = $this->generator->processRoute($route);
-        $this->assertTrue(is_array($parsed));
-        $this->assertArrayHasKey('showresponse', $parsed);
-        $this->assertTrue($parsed['showresponse']);
-        $this->assertSame(
-            $parsed['response'],
-            '{"data":[{"id":1,"description":"Welcome on this test versions","name":"TestName"},'.
-            '{"id":1,"description":"Welcome on this test versions","name":"TestName"}]}'
-        );
+
+        $this->assertResponse($parsed, '{"data":[{"id":1,"description":"Welcome on this test versions","name":"TestName"},' .
+            '{"id":1,"description":"Welcome on this test versions","name":"TestName"}]}');
     }
 
     public function testCanParseTransformerCollectionTagWithModel()
     {
-        RouteFacade::post('/transformerCollectionTagWithModel', TestController::class.'@transformerCollectionTagWithModel');
-        $route = new Route(['GET'], '/transformerCollectionTagWithModel', ['uses' => TestController::class.'@transformerCollectionTagWithModel']);
+        RouteFacade::post('/transformerCollectionTagWithModel', TestController::class . '@transformerCollectionTagWithModel');
+        $route = new Route(['GET'], '/transformerCollectionTagWithModel', ['uses' => TestController::class . '@transformerCollectionTagWithModel']);
         $parsed = $this->generator->processRoute($route);
-        $this->assertTrue(is_array($parsed));
-        $this->assertArrayHasKey('showresponse', $parsed);
-        $this->assertTrue($parsed['showresponse']);
-        $this->assertSame(
-            $parsed['response'],
-            '{"data":[{"id":1,"description":"Welcome on this test versions","name":"TestName"},'.
-            '{"id":1,"description":"Welcome on this test versions","name":"TestName"}]}'
-        );
+
+        $this->assertResponse($parsed, '{"data":[{"id":1,"description":"Welcome on this test versions","name":"TestName"},' .
+            '{"id":1,"description":"Welcome on this test versions","name":"TestName"}]}');
+    }
+
+    public function testCanParseTransformerTagWithCustomSerializer()
+    {
+        RouteFacade::post('/transformerTagWithCustomSerializer', TestController::class . '@transformerTagWithCustomSerializer');
+        $route = new Route(['GET'], '/transformerTagWithCustomSerializer', ['uses' => TestController::class . '@transformerTagWithCustomSerializer']);
+        $parsed = $this->generator->processRoute($route);
+
+        $this->assertResponse($parsed, '{"id":1,"description":"Welcome on this test versions","name":"TestName"}');
+    }
+
+    public function testCanParseResponseClassTagWithCustomStaticResponseData()
+    {
+        RouteFacade::post('/responseClassTagWithCustomStaticResponseData', TestController::class . '@responseClassTagWithCustomStaticResponseData');
+        $route = new Route(['GET'], '/responseClassTagWithCustomStaticResponseData', ['uses' => TestController::class . '@responseClassTagWithCustomStaticResponseData']);
+        $parsed = $this->generator->processRoute($route);
+
+        $response = json_decode($parsed['response'], true);
+
+        $this->assertEquals($response, ['message' => 'test', 'status_code' => 200]);
+    }
+
+    public function testCanParseResponseClassTagWithCustomDynamicResponseData()
+    {
+        RouteFacade::post('/responseClassTagWithCustomDynamicResponseData', TestController::class . '@responseClassTagWithCustomDynamicResponseData');
+        $route = new Route(['GET'], '/responseClassTagWithCustomDynamicResponseData', ['uses' => TestController::class . '@responseClassTagWithCustomDynamicResponseData']);
+        $parsed = $this->generator->processRoute($route);
+
+        $response = json_decode($parsed['response'], true);
+
+        $this->assertEquals($response, ['data' => [], 'message' => 'test', 'status_code' => 200]);
+    }
+
+    public function testCanParseTransformerTagWithData()
+    {
+        if (version_compare(PHP_VERSION, '7.0.0', '<')) {
+            $this->markTestSkipped('The transformer tag without model need PHP 7');
+        } //
+        RouteFacade::post('/transformerTagWithData', TestController::class . '@transformerTagWithData');
+        $route = new Route(['GET'], '/transformerTagWithData', ['uses' => TestController::class . '@transformerTagWithData']);
+        $parsed = $this->generator->processRoute($route);
+
+        $this->assertResponse($parsed, '{"data":{"id":1,"description":"Welcome on this test versions","name":"TestName"}}');
+    }
+
+    public function testCanParseTransformerCollectionTagWithData()
+    {
+        if (version_compare(PHP_VERSION, '7.0.0', '<')) {
+            $this->markTestSkipped('The transformer tag without model need PHP 7');
+        }
+        RouteFacade::post('/transformerCollectionTagWithData', TestController::class . '@transformerCollectionTagWithData');
+        $route = new Route(['GET'], '/transformerCollectionTagWithData', ['uses' => TestController::class . '@transformerCollectionTagWithData']);
+        $parsed = $this->generator->processRoute($route);
+
+        $this->assertResponse($parsed, '{"data":[{"id":1,"description":"Welcome on this test versions","name":"TestName"},' .
+            '{"id":1,"description":"Welcome on this test versions","name":"TestName"}]}');
+    }
+
+    public function testCanParseDataTagWithOutAnyOthersTag()
+    {
+        RouteFacade::post('/dataTag', TestController::class . '@dataTag');
+        $route = new Route(['GET'], '/dataTag', ['uses' => TestController::class . '@dataTag']);
+        $parsed = $this->generator->processRoute($route);
+
+        $this->assertResponse($parsed, '{
+    "id": "1",
+    "description": "Welcome on this test versions",
+    "name": "TestName"
+}');
+    }
+
+    protected function getPackageProviders($app)
+    {
+        return [
+            ApiDocGeneratorServiceProvider::class,
+        ];
     }
 }
