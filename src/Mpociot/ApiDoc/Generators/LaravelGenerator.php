@@ -21,6 +21,7 @@ class LaravelGenerator extends AbstractGenerator
      * @param bool $withResponse
      *
      * @return array
+     * @throws \Exception
      */
     public function processRoute($route, $bindings = [], $headers = [], $withResponse = true)
     {
@@ -44,6 +45,14 @@ class LaravelGenerator extends AbstractGenerator
                 if ($transformerResponse) {
                     // we have a transformer response from the docblock ( @transformer || @transformercollection )
                     $response = $transformerResponse;
+                    $showresponse = true;
+                }
+            }
+            if (!$response) {
+                $responderResponse = $this->getResponderResponse($routeDescription['tags']);
+                if ($responderResponse) {
+                    // we have a transformer response from the docblock ( @responder )
+                    $response = $responderResponse;
                     $showresponse = true;
                 }
             }
@@ -109,6 +118,7 @@ class LaravelGenerator extends AbstractGenerator
                 // if we can't find the transformer we can't generate a response
                 return;
             }
+
             $demoData = [];
 
             $reflection = new ReflectionClass($transformer);
@@ -173,6 +183,9 @@ class LaravelGenerator extends AbstractGenerator
                 $resource = new Collection([$demoData, $demoData], new $transformer);
             }
 
+            // if has responder
+            return $this->getResponderResponse($tags, $resource, $transformer);
+
             return \response($fractal->createData($resource)->toJson());
         } catch (\Exception $e) {
             // it isn't possible to parse the transformer
@@ -215,6 +228,47 @@ class LaravelGenerator extends AbstractGenerator
         }, $additionData), 1, 0);
 
         return $additionData;
+    }
+
+    /**
+     * @param $tags
+     * @param null $resource
+     * @param null $transformer
+     *
+     * @return mixed
+     */
+    protected function getResponderResponse($tags, $resource = null, $transformer = null)
+    {
+        // todo :: add more options to responder.
+        $responderTags = $this->getFirstTagFromDocblock($tags, 'responder');
+        if ($responderTags) {
+            if ($resource == null) {
+                // try get from @data tag
+                $resource = $this->getDataTag($tags, null);
+            }
+
+            if ($transformer == null) {
+                // try get from @transformer tag
+                $transformer = $this->getFirstTagFromDocblock($tags, 'transformer');
+                $transformer = $transformer ? $transformer->getContent() : null;
+            }
+
+            // get status
+            $status = $this->getFirstTagFromDocblock($tags,'status');
+            $status = $status ? $status->getContent() : null;
+
+            $resourceKey = $this->getFirstTagFromDocblock($tags, 'resource-key');
+            $resourceKey = $resourceKey ? $resourceKey->getContent() : null;
+
+            $responder = responder()->{$responderTags->getContent()}($resource, $transformer, $resourceKey);
+            if ($responderTags->getContent() !== 'error') {
+                // try get meta.
+                $metaData = $this->explodeData($this->getFirstTagFromDocblock($tags, 'meta'), []);
+                $responder = $responder->meta($metaData);
+            }
+
+            return $responder->respond($status);
+        }
     }
 
     /**

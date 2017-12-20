@@ -18,7 +18,7 @@
         "php": ">=7.0.0",
         "fzaninotto/faker": "~1.0",
         "laravel/framework": "~5.5",
-        "mpociot/documentarian": "^0.2.0",
+        "yemenifree/documentarian": "^0.0",
         "mpociot/reflection-docblock": "^1.0",
         "ramsey/uuid": "^3.0",
         "illuminate/translation": "^5.5"

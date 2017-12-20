@@ -116,7 +116,8 @@ class GenerateDocumentation extends Command
             });
         });
 
-        $frontmatter = view('apidoc::partials.frontmatter');
+        $frontmatter = view('apidoc::partials.frontmatter')
+            ->with('parsedRoutes', $parsedRouteOutput);
         /*
          * In case the target file already exists, we should check if the documentation was modified
          * and skip the modified parts of the routes.

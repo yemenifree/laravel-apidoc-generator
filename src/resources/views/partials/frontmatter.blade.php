@@ -5,8 +5,15 @@ language_tabs:
 - javascript
 
 includes:
+- errors
 
 search: true
 
-toc_footers:
-- <a href='http://github.com/mpociot/documentarian'>Documentation Powered by Documentarian</a>
+parsedRoutes:
+ @foreach($parsedRoutes as $group => $routes)
+ {{ $group }}:
+  -
+ @foreach($routes as $parsedRoute)
+   {{ $parsedRoute['id'] }}: {{ $parsedRoute['title'] }}
+ @endforeach
+@endforeach
