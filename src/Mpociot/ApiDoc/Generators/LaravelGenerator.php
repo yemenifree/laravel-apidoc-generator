@@ -85,6 +85,7 @@ class LaravelGenerator extends AbstractGenerator
         return $this->getParameters([
             'id' => md5($this->getUri($route) . ':' . implode($this->getMethods($route))),
             'resource' => $routeGroup,
+            'middleware' => $route->middleware(),
             'title' => $routeDescription['short'],
             'description' => $routeDescription['long'],
             'methods' => $this->getMethods($route),

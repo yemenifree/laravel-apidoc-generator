@@ -53,8 +53,13 @@ $.ajax(settings).done(function (response) {
 ### HTTP Request
 @foreach($parsedRoute['methods'] as $method)
 `{{$method}} {{$parsedRoute['uri']}}`
-
 @endforeach
+
+@isset($parsedRoute['middleware'])
+### Middleware
+{!! implode(', ',$parsedRoute['middleware']) !!}
+@endisset
+
 @if(count($parsedRoute['parameters']))
 #### Parameters
 

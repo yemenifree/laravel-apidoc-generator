@@ -3,14 +3,14 @@
 namespace Mpociot\ApiDoc\Generators;
 
 use Faker\Factory;
-use ReflectionClass;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Mpociot\ApiDoc\Parsers\RuleDescriptionParser as Description;
 use Mpociot\Reflection\DocBlock;
 use Mpociot\Reflection\DocBlock\Tag;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Foundation\Http\FormRequest;
-use Mpociot\ApiDoc\Parsers\RuleDescriptionParser as Description;
+use ReflectionClass;
 
 abstract class AbstractGenerator
 {
@@ -49,6 +49,40 @@ abstract class AbstractGenerator
         // TODO :: check & fix json format & remove invalid char (\n\t\r ... ) from content to decode json & display in response section right
 
         return \response(\json_encode($responseTags->getContent()));
+    }
+
+    /**
+     * Get first tag from DocBlock.
+     *
+     * @param $tags
+     * @param array|string $names
+     *
+     * @return \Mpociot\Reflection\DocBlock\Tag
+     */
+    protected function getFirstTagFromDocblock($tags, $names)
+    {
+        return \array_first($this->getTagsFromDocblock($tags, $names));
+    }
+
+    /**
+     * Get all tags from DocBlock.
+     *
+     * @param $tags
+     * @param array|string $names
+     *
+     * @return array
+     */
+    protected function getTagsFromDocblock($tags, $names)
+    {
+        $names = \array_wrap($names);
+
+        return \array_filter($tags, function ($tag) use ($names) {
+            if (!($tag instanceof Tag)) {
+                return false;
+            }
+
+            return \in_array(\strtolower($tag->getName()), $names);
+        });
     }
 
     /**
@@ -92,7 +126,7 @@ abstract class AbstractGenerator
 
         foreach ($reflectionMethod->getParameters() as $parameter) {
             $parameterType = $parameter->getClass();
-            if (! is_null($parameterType) && class_exists($parameterType->name)) {
+            if (!is_null($parameterType) && class_exists($parameterType->name)) {
                 $className = $parameterType->name;
 
                 if (is_subclass_of($className, FormRequest::class)) {
@@ -175,7 +209,7 @@ abstract class AbstractGenerator
                 }
                 break;
             case 'between':
-                if (! isset($attributeData['type'])) {
+                if (!isset($attributeData['type'])) {
                     $attributeData['type'] = 'numeric';
                 }
                 $attributeData['description'][] = Description::parse($rule)->with($parameters)->getDescription();
@@ -319,6 +353,10 @@ abstract class AbstractGenerator
      */
     protected function parseStringRule($rules)
     {
+        if (is_object($rules)) {
+            return [class_basename($rules), []];
+        }
+
         $parameters = [];
 
         // The format for specifying validation rules and parameters follows an
@@ -379,7 +417,7 @@ abstract class AbstractGenerator
     protected function fancyImplode($arr, $first, $last)
     {
         $arr = array_map(function ($value) {
-            return '`'.$value.'`';
+            return '`' . $value . '`';
         }, $arr);
         array_push($arr, implode($last, array_splice($arr, -2)));
 
@@ -390,7 +428,7 @@ abstract class AbstractGenerator
     {
         $attribute = '';
         collect($parameters)->map(function ($item, $key) use (&$attribute, $first, $last) {
-            $attribute .= '`'.$item.'` ';
+            $attribute .= '`' . $item . '` ';
             if (($key + 1) % 2 === 0) {
                 $attribute .= $last;
             } else {
@@ -438,7 +476,7 @@ abstract class AbstractGenerator
     {
         $uri = $this->getUri($route);
         foreach ($bindings as $model => $id) {
-            $uri = str_replace('{'.$model.'}', $id, $uri);
+            $uri = str_replace('{' . $model . '}', $id, $uri);
         }
 
         return $uri;
@@ -539,47 +577,13 @@ abstract class AbstractGenerator
         foreach ($headers as $name => $value) {
             $name = strtr(strtoupper($name), '-', '_');
 
-            if (! Str::startsWith($name, $prefix) && $name !== 'CONTENT_TYPE') {
-                $name = $prefix.$name;
+            if (!Str::startsWith($name, $prefix) && $name !== 'CONTENT_TYPE') {
+                $name = $prefix . $name;
             }
 
             $server[$name] = $value;
         }
 
         return $server;
-    }
-
-    /**
-     * Get first tag from DocBlock.
-     *
-     * @param $tags
-     * @param array|string $names
-     *
-     * @return \Mpociot\Reflection\DocBlock\Tag
-     */
-    protected function getFirstTagFromDocblock($tags, $names)
-    {
-        return \array_first($this->getTagsFromDocblock($tags, $names));
-    }
-
-    /**
-     * Get all tags from DocBlock.
-     *
-     * @param $tags
-     * @param array|string $names
-     *
-     * @return array
-     */
-    protected function getTagsFromDocblock($tags, $names)
-    {
-        $names = \array_wrap($names);
-
-        return \array_filter($tags, function ($tag) use ($names) {
-            if (! ($tag instanceof Tag)) {
-                return false;
-            }
-
-            return \in_array(\strtolower($tag->getName()), $names);
-        });
     }
 }
