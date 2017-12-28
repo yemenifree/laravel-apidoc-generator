@@ -21,7 +21,8 @@
         "yemenifree/documentarian": "^0.0",
         "mpociot/reflection-docblock": "^1.0",
         "ramsey/uuid": "^3.0",
-        "illuminate/translation": "^5.5"
+        "illuminate/translation": "^5.5",
+        "imangazaliev/didom": "^1.0"
     },
     "require-dev": {
         "orchestra/testbench": "~3.5",
