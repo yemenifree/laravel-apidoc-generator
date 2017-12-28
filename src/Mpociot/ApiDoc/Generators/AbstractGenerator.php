@@ -105,6 +105,10 @@ abstract class AbstractGenerator
             ];
             foreach ($rules as $ruleName => $rule) {
                 $this->parseRule($rule, $attribute, $attributeData, $routeData['id']);
+
+                if ($ruleName == 'confirmed') {
+                    $routeData['parameters'][$attribute.'_confirmation'] = $attributeData;
+                }
             }
             $routeData['parameters'][$attribute] = $attributeData;
         }
