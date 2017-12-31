@@ -57,7 +57,7 @@ $.ajax(settings).done(function (response) {
 
 @isset($parsedRoute['middleware'])
 ### Middleware
-{!! implode(', ',$parsedRoute['middleware']) !!}
+`{!! implode(', ',$parsedRoute['middleware']) !!}`
 @endisset
 
 @if(count($parsedRoute['parameters']))
